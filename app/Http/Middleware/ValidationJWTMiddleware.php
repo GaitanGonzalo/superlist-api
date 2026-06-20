@@ -1,0 +1,38 @@
+<?php
+
+namespace App\Http\Middleware;
+
+use Closure;
+use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Exception;
+use Illuminate\Support\Facades\Log;
+use Tymon\JWTAuth\Facades\JWTAuth;
+
+class ValidationJWTMiddleware
+{
+    /**
+     * Handle an incoming request.
+     *
+     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     */
+    public function handle(Request $request, Closure $next): Response
+    {
+        $token = $request->bearerToken();
+        
+        if(!$token) return response()->json('unauthorized', 401);
+        try {         
+            $user = JWTAuth::parseToken()->authenticate();
+            //dd($user);
+        } catch (Exception $e){
+            if ($e instanceof \Tymon\JWTAuth\Exceptions\TokenInvalidException){
+                return response()->json(['message' => 'Token is Invalid'], 401);
+            }else if ($e instanceof \Tymon\JWTAuth\Exceptions\TokenExpiredException){
+                return response()->json(['message' => 'Token is Expired'],401);
+            }else{
+                return response()->json(['message' => 'Authorization Token not found'],400);
+            }
+        }
+        return $next($request);
+    }
+}
