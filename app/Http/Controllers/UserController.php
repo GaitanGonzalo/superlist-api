@@ -12,7 +12,12 @@ class UserController extends Controller
 {
     public function view(Request $request)
     {
-        $user = $request->user();
+        $user = $request->user()->load([
+        'country:id,name',
+        'state:id,name',
+        'location:id,name'
+    ]);
+    
         return response()->json($user);
     }
 
@@ -39,6 +44,28 @@ class UserController extends Controller
     }
 
     public function update(UserUpdateRequest $request)
+    {
+        try {
+            $data = $request->except(['role_id', 'deleted', 'id']);
+            $user = $request->user();
+            $user->update($data);
+
+            return response()->json($user, 200);
+        } catch (\Throwable $th) {
+            Log::info('Update User', [
+                'error' => $th->getMessage()
+            ]);
+            return response()->json([
+                'message' => 'No se pudo actualizar el usuario -[U-002]',
+                'errors' => [
+                    'error' => 'Internal error',
+                    'statusCode' => 500
+                ]
+            ], 500);
+        }
+    }
+
+    public function updateAdmin(UserUpdateRequest $request)
     {
         try {
             $data = $request->all();
