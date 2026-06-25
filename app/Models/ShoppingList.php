@@ -8,6 +8,8 @@ class ShoppingList extends Model
 {
     protected $fillable = [ 
         'uuid',
+        'user_id',
+        'store_id',
         'store_name',
         'store_address',
         'is_finished',

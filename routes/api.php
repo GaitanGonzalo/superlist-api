@@ -9,6 +9,7 @@ use App\Http\Controllers\StoresController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\CountriesController;
 use App\Http\Controllers\StatesController;
+use App\Http\Controllers\ShoppingListController;
 
 Route::get('/status', function () {
     return response()->json(['status' => 'OK', 'version' => '1.0.0', 'proyecto' => 'Super List App - api']);
@@ -45,6 +46,14 @@ Route::middleware(['jwt_cookies', 'jwt_auth', 'auth:api'])->prefix('stores')->gr
     Route::post('/', [StoresController::class, 'store'])->name('api.stores.store');
     Route::get('/{store_id}/products', [ProductsPricesStoresController::class, 'searchProducts'])->name('api.stores.search_products');
     //Route::patch('/update', [UserController::class, 'update'])->name('api.user.profile');
+});
+
+// SHOPPING LISTS
+Route::middleware(['jwt_cookies', 'jwt_auth', 'auth:api'])->prefix('lists')->group(function () {
+    Route::get('/', [ShoppingListController::class, 'index'])->name('api.lists.index');
+    Route::post('/', [ShoppingListController::class, 'store'])->name('api.lists.store');
+    Route::get('/{list_id}', [ShoppingListController::class, 'show'])->name('api.lists.show');
+    Route::put('/{list_id}', [ShoppingListController::class, 'update'])->name('api.lists.update');
 });
 
 

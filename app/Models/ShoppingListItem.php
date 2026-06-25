@@ -8,7 +8,9 @@ class ShoppingListItem extends Model
 {
     protected $fillable = [ 
         'id',
+        'uuid',
         'shopping_list_id',
+        'product_id',
         'name',
         'quantity',
         'price',
