@@ -13,8 +13,10 @@ return new class extends Migration
     {
         Schema::create('shopping_lists', function (Blueprint $table) {
             $table->id();
-            $table->string('uuid');
-            $table->string('store_name')->nullable();
+            $table->bigInteger('user_id');
+            $table->string('uuid')->nullable();
+            $table->string('store_id')->nullable();
+            $table->string('store_name')->default('Sin comercio definido');
             $table->string('store_address')->nullable();
             $table->tinyInteger('is_finished')->default(0);
             $table->timestamp('finished_at')->nullable();
