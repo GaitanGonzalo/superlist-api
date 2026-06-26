@@ -8,6 +8,7 @@ use App\Http\Requests\StoreListRequest;
 use App\Http\Resources\ShoppingListResource;
 use App\Models\ShoppingList;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
 class ShoppingListController extends Controller
@@ -17,11 +18,11 @@ class ShoppingListController extends Controller
      *
      * @return JsonResponse
      */
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
         try {
-            $userId = auth('api')->id() ?? auth()->id();
-            
+            $userId = $request->user()->id;
+
             $lists = ShoppingList::where('user_id', $userId)
                 ->where('deleted', 0)
                 ->with(['items' => function ($query) {
@@ -61,7 +62,7 @@ class ShoppingListController extends Controller
     public function store(StoreListRequest $request, CreateShoppingListAction $action): JsonResponse
     {
         try {
-            $userId = auth('api')->id() ?? auth()->id();
+            $userId = $request->user()->id;
             $shoppingList = $action->execute($userId, $request->validated());
 
             // Load items relationship to return it in resource
@@ -96,10 +97,10 @@ class ShoppingListController extends Controller
      * @param int|string $listId
      * @return JsonResponse
      */
-    public function show($listId): JsonResponse
+    public function show($listId, Request $request): JsonResponse
     {
         try {
-            $userId = auth('api')->id() ?? auth()->id();
+            $userId = $request->user()->id;
 
             $shoppingList = ShoppingList::where('user_id', $userId)
                 ->where('deleted', 0)
@@ -147,7 +148,7 @@ class ShoppingListController extends Controller
     public function update(StoreListRequest $request, $listId, UpdateShoppingListAction $action): JsonResponse
     {
         try {
-            $userId = auth('api')->id() ?? auth()->id();
+            $userId = $request->user()->id;
 
             $shoppingList = ShoppingList::where('user_id', $userId)
                 ->where('deleted', 0)

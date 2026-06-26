@@ -10,6 +10,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\CountriesController;
 use App\Http\Controllers\StatesController;
 use App\Http\Controllers\ShoppingListController;
+use App\Http\Controllers\ShoppingListItemController;
 
 Route::get('/status', function () {
     return response()->json(['status' => 'OK', 'version' => '1.0.0', 'proyecto' => 'Super List App - api']);
@@ -54,6 +55,13 @@ Route::middleware(['jwt_cookies', 'jwt_auth', 'auth:api'])->prefix('lists')->gro
     Route::post('/', [ShoppingListController::class, 'store'])->name('api.lists.store');
     Route::get('/{list_id}', [ShoppingListController::class, 'show'])->name('api.lists.show');
     Route::put('/{list_id}', [ShoppingListController::class, 'update'])->name('api.lists.update');
+});
+
+// SHOPPING LIST ITEMS (Singular 'list')
+Route::middleware(['jwt_cookies', 'jwt_auth', 'auth:api'])->prefix('list')->group(function () {
+    Route::post('/{list_id}/item', [ShoppingListItemController::class, 'store'])->name('api.list.item.store');
+    Route::match(['put', 'patch'], '/{list_id}/item/{item_id}', [ShoppingListItemController::class, 'update'])->name('api.list.item.update');
+    Route::delete('/{list_id}/item/{item_id}', [ShoppingListItemController::class, 'destroy'])->name('api.list.item.destroy');
 });
 
 

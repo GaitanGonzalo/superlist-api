@@ -29,9 +29,11 @@ class UpdateShoppingListAction
         return DB::transaction(function () use ($userId, $shoppingList, $data) {
             // Update Shopping List Details
             $shoppingList->update([
-                'store_id' => $data['store_id'] ?? $shoppingList->store_id,
-                'store_name' => $data['store_name'] ?? $shoppingList->store_name,
-                'store_address' => $data['store_address'] ?? $shoppingList->store_address,
+                'store_id' => array_key_exists('store_id', $data) ? $data['store_id'] : $shoppingList->store_id,
+                'store_name' => array_key_exists('store_name', $data) 
+                    ? (!empty($data['store_name']) ? $data['store_name'] : 'Sin comercio definido') 
+                    : $shoppingList->store_name,
+                'store_address' => array_key_exists('store_address', $data) ? $data['store_address'] : $shoppingList->store_address,
                 'is_finished' => isset($data['is_finished']) ? ($data['is_finished'] ? 1 : 0) : $shoppingList->is_finished,
                 'finished_at' => $data['finished_at'] ?? $shoppingList->finished_at,
                 'total_spent' => $data['total_spent'] ?? $shoppingList->total_spent,

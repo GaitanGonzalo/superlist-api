@@ -31,7 +31,7 @@ class CreateShoppingListAction
                 'user_id' => $userId,
                 'uuid' => $data['uuid'] ?? null,
                 'store_id' => $data['store_id'] ?? null,
-                'store_name' => $data['store_name'] ?? 'Sin comercio definido',
+                'store_name' => !empty($data['store_name']) ? $data['store_name'] : 'Sin comercio definido',
                 'store_address' => $data['store_address'] ?? null,
                 'is_finished' => isset($data['is_finished']) ? ($data['is_finished'] ? 1 : 0) : 0,
                 'finished_at' => $data['finished_at'] ?? null,

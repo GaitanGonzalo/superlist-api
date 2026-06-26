@@ -422,13 +422,15 @@ Utilizar:
 Log::info()
 Log::warning()
 Log::error()
+$request->user()
 
 No utilizar:
 
 dd()
 dump()
 var_dump()
-
+auth('api')->id()
+auth()->id()
 en producción.
 
 ---

@@ -48,10 +48,19 @@ class AuthController extends Controller
             }
             // Renovar el token
             $newToken = JWTAuth::refresh($token);
+            
+            // Obtener el usuario asociado al nuevo token
+            $user = JWTAuth::setToken($newToken)->toUser();
+    
+            $response = [
+                'message' => 'Refresh ok - access granted',
+                'auth_token' => $newToken,
+                'user' => $user
+            ];
     
             // Devolver el nuevo token al usuario
-            return response()->json(['message'=>'Refresh ok - access granted'])
-            ->cookie('AUTH_TOKEN', $token, 120, '/', null, true, true, false, 'None');
+            return response()->json($response)
+            ->cookie('AUTH_TOKEN', $newToken, 120, '/', null, true, true, false, 'None');
     
         } catch (JWTException $e) {
             // Si hay algún error en la renovación del token, devolver un error

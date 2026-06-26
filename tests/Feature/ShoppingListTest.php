@@ -113,12 +113,50 @@ class ShoppingListTest extends TestCase
     }
 
     /**
+     * Test creating a shopping list without selecting a store or totals.
+     */
+    public function test_user_can_create_shopping_list_without_store_and_totals(): void
+    {
+        $user = User::first();
+
+        $data = [
+            'uuid' => (string) Str::uuid(),
+            'store_id' => null,
+            'store_name' => null,
+            'store_address' => null,
+            'is_finished' => false,
+        ];
+
+        $response = $this->postJson(
+            route('api.lists.store'),
+            $data,
+            $this->getAuthHeaderForUser($user)
+        );
+
+        $response->assertStatus(201);
+        $response->assertJsonPath('success', true);
+        $response->assertJsonPath('data.store_name', 'Sin comercio definido');
+        $response->assertJsonPath('data.total_spent', 0);
+        $response->assertJsonPath('data.actual_total', 0);
+        $response->assertJsonPath('data.user_id', $user->id);
+
+        // Check shopping list was saved to database
+        $this->assertDatabaseHas('shopping_lists', [
+            'user_id' => $user->id,
+            'store_name' => 'Sin comercio definido',
+            'store_id' => null,
+            'total_spent' => 0.00,
+            'actual_total' => 0.00,
+        ]);
+    }
+
+    /**
      * Test index authorization (a user can only see their own lists).
      */
     public function test_user_cannot_view_other_users_shopping_lists(): void
     {
         $user1 = User::first();
-        
+
         // Create second user
         $user2 = User::create([
             'name' => 'User Two',
@@ -144,7 +182,7 @@ class ShoppingListTest extends TestCase
         );
 
         $response->assertStatus(200);
-        
+
         // Response should not contain User 2's list
         $data = $response->json('data.data');
         $this->assertCount(0, $data);
@@ -214,7 +252,7 @@ class ShoppingListTest extends TestCase
         // - item2 (P2): omitted from request (should be soft-deleted)
         // - item3 (P3): new item added
         $item3Uuid = (string) Str::uuid();
-        
+
         $updateData = [
             'store_id' => $store->uuid,
             'store_name' => $store->name,
@@ -360,5 +398,143 @@ class ShoppingListTest extends TestCase
 
         $storeProductsResponse->assertStatus(200);
         $storeProductsResponse->assertJsonPath('data.0.latest_price', 250); // returns the latest price!
+    }
+
+    /**
+     * Test adding a single item to a shopping list and checking if price is logged.
+     */
+    public function test_user_can_add_item_to_shopping_list(): void
+    {
+        $user = User::first();
+        $store = Stores::create(['name' => 'Store Item Test', 'uuid' => (string) Str::uuid(), 'is_subsidiary' => false]);
+        $list = ShoppingList::create(['user_id' => $user->id, 'store_id' => $store->uuid, 'store_name' => $store->name, 'total_spent' => 0, 'actual_total' => 0, 'deleted' => 0]);
+        $product = Products::create(['name' => 'Single Item P', 'ean_code' => '779', 'user_creator_id' => $user->id]);
+
+        $itemData = [
+            'uuid' => (string) Str::uuid(),
+            'product_id' => $product->id,
+            'name' => 'Single Item P Name',
+            'quantity' => 5,
+            'price' => 125.50,
+            'is_purchased' => false,
+        ];
+
+        $response = $this->postJson(
+            route('api.list.item.store', ['list_id' => $list->id]),
+            $itemData,
+            $this->getAuthHeaderForUser($user)
+        );
+
+        $response->assertStatus(201);
+        $response->assertJsonPath('success', true);
+        $response->assertJsonPath('data.price', 125.5);
+
+        // Check it was added to shopping_list_items
+        $this->assertDatabaseHas('shopping_list_items', [
+            'shopping_list_id' => $list->id,
+            'product_id' => $product->id,
+            'price' => 125.50,
+            'deleted' => 0,
+        ]);
+
+        // Check price was logged in products_prices_stores
+        $this->assertDatabaseHas('products_prices_stores', [
+            'store_id' => $store->id,
+            'product_id' => $product->id,
+            'price' => 125.50,
+        ]);
+    }
+
+    /**
+     * Test updating a single item in a shopping list.
+     */
+    public function test_user_can_update_single_shopping_list_item(): void
+    {
+        $user = User::first();
+        $store = Stores::create(['name' => 'Store Item Test', 'uuid' => (string) Str::uuid(), 'is_subsidiary' => false]);
+        $list = ShoppingList::create(['user_id' => $user->id, 'store_id' => $store->uuid, 'store_name' => $store->name, 'total_spent' => 100, 'actual_total' => 100, 'deleted' => 0]);
+        $product = Products::create(['name' => 'Single Item P', 'ean_code' => '779', 'user_creator_id' => $user->id]);
+
+        $item = ShoppingListItem::create([
+            'shopping_list_id' => $list->id,
+            'uuid' => (string) Str::uuid(),
+            'product_id' => $product->id,
+            'name' => 'Initial Name',
+            'quantity' => 1,
+            'price' => 100.00,
+            'is_purchased' => 0,
+            'deleted' => 0,
+        ]);
+
+        $updateData = [
+            'uuid' => $item->uuid,
+            'product_id' => $product->id,
+            'name' => 'Updated Name',
+            'quantity' => 2,
+            'price' => 150.00, // updated price
+            'is_purchased' => true,
+        ];
+
+        $response = $this->patchJson(
+            route('api.list.item.update', ['list_id' => $list->id, 'item_id' => $item->id]),
+            $updateData,
+            $this->getAuthHeaderForUser($user)
+        );
+
+        $response->assertStatus(200);
+        $response->assertJsonPath('success', true);
+        $response->assertJsonPath('data.name', 'Updated Name');
+
+        // Check update in database
+        $this->assertDatabaseHas('shopping_list_items', [
+            'id' => $item->id,
+            'name' => 'Updated Name',
+            'price' => 150.00,
+            'quantity' => 2,
+            'is_purchased' => 1,
+        ]);
+
+        // Check updated price was logged in products_prices_stores
+        $this->assertDatabaseHas('products_prices_stores', [
+            'store_id' => $store->id,
+            'product_id' => $product->id,
+            'price' => 150.00,
+        ]);
+    }
+
+    /**
+     * Test soft deleting a single item.
+     */
+    public function test_user_can_delete_single_shopping_list_item(): void
+    {
+        $user = User::first();
+        $list = ShoppingList::create(['user_id' => $user->id, 'store_name' => 'Store Test', 'total_spent' => 100, 'actual_total' => 100, 'deleted' => 0]);
+        $product = Products::create(['name' => 'Single Item P', 'ean_code' => '779', 'user_creator_id' => $user->id]);
+
+        $item = ShoppingListItem::create([
+            'shopping_list_id' => $list->id,
+            'uuid' => (string) Str::uuid(),
+            'product_id' => $product->id,
+            'name' => 'Item to Delete',
+            'quantity' => 1,
+            'price' => 100.00,
+            'is_purchased' => 0,
+            'deleted' => 0,
+        ]);
+
+        $response = $this->deleteJson(
+            route('api.list.item.destroy', ['list_id' => $list->id, 'item_id' => $item->id]),
+            [],
+            $this->getAuthHeaderForUser($user)
+        );
+
+        $response->assertStatus(200);
+        $response->assertJsonPath('success', true);
+
+        // Check soft deleted state
+        $this->assertDatabaseHas('shopping_list_items', [
+            'id' => $item->id,
+            'deleted' => 1,
+        ]);
     }
 }
