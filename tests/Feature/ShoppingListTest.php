@@ -211,11 +211,10 @@ class ShoppingListTest extends TestCase
         $product1 = Products::create(['name' => 'P1', 'ean_code' => '111', 'user_creator_id' => $user->id]);
         $product2 = Products::create(['name' => 'P2', 'ean_code' => '222', 'user_creator_id' => $user->id]);
         $product3 = Products::create(['name' => 'P3', 'ean_code' => '333', 'user_creator_id' => $user->id]);
-
         // Create initial shopping list with P1 and P2
         $list = ShoppingList::create([
             'user_id' => $user->id,
-            'store_id' => $store->uuid,
+            'store_id' => $store->id,
             'store_name' => $store->name,
             'total_spent' => 200,
             'actual_total' => 200,
@@ -407,7 +406,7 @@ class ShoppingListTest extends TestCase
     {
         $user = User::first();
         $store = Stores::create(['name' => 'Store Item Test', 'uuid' => (string) Str::uuid(), 'is_subsidiary' => false]);
-        $list = ShoppingList::create(['user_id' => $user->id, 'store_id' => $store->uuid, 'store_name' => $store->name, 'total_spent' => 0, 'actual_total' => 0, 'deleted' => 0]);
+        $list = ShoppingList::create(['user_id' => $user->id, 'store_id' => $store->id, 'store_name' => $store->name, 'total_spent' => 0, 'actual_total' => 0, 'deleted' => 0]);
         $product = Products::create(['name' => 'Single Item P', 'ean_code' => '779', 'user_creator_id' => $user->id]);
 
         $itemData = [
@@ -452,7 +451,7 @@ class ShoppingListTest extends TestCase
     {
         $user = User::first();
         $store = Stores::create(['name' => 'Store Item Test', 'uuid' => (string) Str::uuid(), 'is_subsidiary' => false]);
-        $list = ShoppingList::create(['user_id' => $user->id, 'store_id' => $store->uuid, 'store_name' => $store->name, 'total_spent' => 100, 'actual_total' => 100, 'deleted' => 0]);
+        $list = ShoppingList::create(['user_id' => $user->id, 'store_id' => $store->id, 'store_name' => $store->name, 'total_spent' => 100, 'actual_total' => 100, 'deleted' => 0]);
         $product = Products::create(['name' => 'Single Item P', 'ean_code' => '779', 'user_creator_id' => $user->id]);
 
         $item = ShoppingListItem::create([

@@ -5,6 +5,7 @@ namespace App\Actions\ShoppingList;
 use App\Actions\Price\RegisterPriceAction;
 use App\Models\ShoppingList;
 use App\Models\ShoppingListItem;
+use App\Models\Stores;
 use Illuminate\Support\Facades\DB;
 
 class UpdateShoppingListAction
@@ -27,9 +28,21 @@ class UpdateShoppingListAction
     public function execute(int $userId, ShoppingList $shoppingList, array $data): ShoppingList
     {
         return DB::transaction(function () use ($userId, $shoppingList, $data) {
+            $storeId = $shoppingList->store_id;
+            if (array_key_exists('store_id', $data)) {
+                if (!empty($data['store_id'])) {
+                    $store = Stores::where('id', $data['store_id'])
+                        ->orWhere('uuid', $data['store_id'])
+                        ->first();
+                    $storeId = $store ? $store->id : null;
+                } else {
+                    $storeId = null;
+                }
+            }
+
             // Update Shopping List Details
             $shoppingList->update([
-                'store_id' => array_key_exists('store_id', $data) ? $data['store_id'] : $shoppingList->store_id,
+                'store_id' => $storeId,
                 'store_name' => array_key_exists('store_name', $data) 
                     ? (!empty($data['store_name']) ? $data['store_name'] : 'Sin comercio definido') 
                     : $shoppingList->store_name,

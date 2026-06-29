@@ -390,8 +390,8 @@ product_id
 
 Reglas:
 
-* Nunca modificar migraciones ejecutadas.
-* Crear nuevas migraciones para cambios.
+* Modificar migraciones pero no ejecutarlas.
+* Crear nuevas migraciones si es necesario.
 * Mantener compatibilidad hacia atrás cuando sea posible.
 
 ---

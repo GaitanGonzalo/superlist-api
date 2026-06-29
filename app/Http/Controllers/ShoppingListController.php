@@ -107,7 +107,11 @@ class ShoppingListController extends Controller
                 ->with(['items' => function ($query) {
                     $query->where('deleted', 0);
                 }])
-                ->find($listId);
+                ->where(function ($query) use ($listId) {
+                    $query->where('id', $listId)
+                        ->orWhere('uuid', $listId);
+                })
+                ->first();
 
             if (!$shoppingList) {
                 return response()->json([
@@ -152,7 +156,11 @@ class ShoppingListController extends Controller
 
             $shoppingList = ShoppingList::where('user_id', $userId)
                 ->where('deleted', 0)
-                ->find($listId);
+                ->where(function ($query) use ($listId) {
+                    $query->where('id', $listId)
+                        ->orWhere('uuid', $listId);
+                })
+                ->first();
 
             if (!$shoppingList) {
                 return response()->json([

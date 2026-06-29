@@ -84,7 +84,11 @@ class ShoppingListItemController extends Controller
             // Find list and verify ownership
             $shoppingList = ShoppingList::where('user_id', $userId)
                 ->where('deleted', 0)
-                ->find($listId);
+                ->where(function ($query) use ($listId) {
+                    $query->where('id', $listId)
+                        ->orWhere('uuid', $listId);
+                })
+                ->first();
 
             if (!$shoppingList) {
                 return response()->json([
@@ -148,7 +152,11 @@ class ShoppingListItemController extends Controller
             // Find list and verify ownership
             $shoppingList = ShoppingList::where('user_id', $userId)
                 ->where('deleted', 0)
-                ->find($listId);
+                ->where(function ($query) use ($listId) {
+                    $query->where('id', $listId)
+                        ->orWhere('uuid', $listId);
+                })
+                ->first();
 
             if (!$shoppingList) {
                 return response()->json([
@@ -160,7 +168,11 @@ class ShoppingListItemController extends Controller
             // Find item and verify it belongs to the list
             $item = ShoppingListItem::where('shopping_list_id', $shoppingList->id)
                 ->where('deleted', 0)
-                ->find($itemId);
+                ->where(function ($query) use ($itemId) {
+                    $query->where('id', $itemId)
+                        ->orWhere('uuid', $itemId);
+                })
+                ->first();
 
             if (!$item) {
                 return response()->json([

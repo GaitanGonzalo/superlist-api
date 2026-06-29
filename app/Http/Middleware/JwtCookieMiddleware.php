@@ -23,11 +23,12 @@ class JwtCookieMiddleware
         Log::info('Request INFO', [
             'User IP' => $request->ip(),
             'user Agent' => $request->userAgent(),
+            'method' => $request->method(),
             'path' => $request->path()
         ]);
         Log::info('JWT Cookie Middleware ejecutado', [
             'cookie' => $request->cookie('AUTH_TOKEN') ? true : false,
-            'auth_header' => $request->header('Authorization')? true : false
+            'auth_header' => $request->header('Authorization') ? true : false
         ]);
         return $next($request);
     }

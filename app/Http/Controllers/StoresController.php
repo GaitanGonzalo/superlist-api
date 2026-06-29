@@ -8,7 +8,52 @@ use Illuminate\Support\Facades\Log;
 
 class StoresController extends Controller
 {
-    public function index() {}
+    public function index(Request $request)
+    {
+        $countryId = $request->user()->country_id;
+        $stateId = $request->user()->state_id;
+        $locationId = $request->user()->location_id;
+        try {
+            $query = Stores::query();
+
+            // Filter by search term if provided
+            if ($request->has('search') && !empty($request->query('search'))) {
+                $search = $request->query('search');
+                $query->where('name', 'like', '%' . $search . '%');
+            }
+
+            // Filter by country, state, location
+            if ($countryId) {
+                $query->where('country_id', $countryId);
+            }
+            if ($stateId) {
+                $query->where('state_id', $stateId);
+            }
+            if ($locationId) {
+                $query->where('location_id', $locationId);
+            }
+
+            $stores = $query->limit(50)->get();
+
+            return response()->json([
+                'success' => true,
+                'data' => $stores
+            ]);
+        } catch (\Throwable $th) {
+            Log::error('Error fetching stores: ' . $th->getMessage(), [
+                'trace' => $th->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'No se pudieron obtener los comercios',
+                'errors' => [
+                    'error' => 'Internal Server Error',
+                    'statusCode' => 500
+                ]
+            ], 500);
+        }
+    }
 
     public function search(Request $request)
     {

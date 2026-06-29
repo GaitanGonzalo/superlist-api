@@ -5,6 +5,7 @@ namespace App\Actions\ShoppingList;
 use App\Actions\Price\RegisterPriceAction;
 use App\Models\ShoppingList;
 use App\Models\ShoppingListItem;
+use App\Models\Stores;
 use Illuminate\Support\Facades\DB;
 
 class CreateShoppingListAction
@@ -26,11 +27,21 @@ class CreateShoppingListAction
     public function execute(int $userId, array $data): ShoppingList
     {
         return DB::transaction(function () use ($userId, $data) {
+            $storeId = null;
+            if (!empty($data['store_id'])) {
+                $store = Stores::where('id', $data['store_id'])
+                    ->orWhere('uuid', $data['store_id'])
+                    ->first();
+                if ($store) {
+                    $storeId = $store->id;
+                }
+            }
+
             // Create Shopping List
             $shoppingList = ShoppingList::create([
                 'user_id' => $userId,
                 'uuid' => $data['uuid'] ?? null,
-                'store_id' => $data['store_id'] ?? null,
+                'store_id' => $storeId,
                 'store_name' => !empty($data['store_name']) ? $data['store_name'] : 'Sin comercio definido',
                 'store_address' => $data['store_address'] ?? null,
                 'is_finished' => isset($data['is_finished']) ? ($data['is_finished'] ? 1 : 0) : 0,
