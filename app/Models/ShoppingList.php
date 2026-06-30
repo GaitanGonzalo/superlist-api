@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class ShoppingList extends Model
 {
-    protected $fillable = [ 
+    protected $fillable = [
         'uuid',
         'user_id',
         'store_id',
