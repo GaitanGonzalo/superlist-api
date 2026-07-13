@@ -184,7 +184,7 @@ class ShoppingListTest extends TestCase
         $response->assertStatus(200);
 
         // Response should not contain User 2's list
-        $data = $response->json('data.data');
+        $data = $response->json('data');
         $this->assertCount(0, $data);
 
         // Attempting to show user 2 list directly from user 1 should return 404

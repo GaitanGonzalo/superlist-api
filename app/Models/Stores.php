@@ -21,7 +21,6 @@ class Stores extends Model
     ];
 
     protected $hidden = [
-        'id',
         'deleted'
     ];
 }

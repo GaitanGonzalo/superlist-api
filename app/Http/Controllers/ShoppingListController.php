@@ -31,11 +31,7 @@ class ShoppingListController extends Controller
                 ->orderBy('created_at', 'desc')
                 ->paginate(15);
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Listas obtenidas exitosamente',
-                'data' => ShoppingListResource::collection($lists)->response()->getData(true)
-            ]);
+            return response()->json($lists);
         } catch (\Throwable $th) {
             Log::error('Error fetching shopping lists: ' . $th->getMessage(), [
                 'trace' => $th->getTraceAsString()
