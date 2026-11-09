@@ -390,7 +390,7 @@ product_id
 
 Reglas:
 
-* Modificar migraciones pero no ejecutarlas.
+* Ejecutar las migraciones cuando se realicen cambios de esquema (`php artisan migrate`).
 * Crear nuevas migraciones si es necesario.
 * Mantener compatibilidad hacia atrás cuando sea posible.
 
