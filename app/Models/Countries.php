@@ -8,9 +8,9 @@ class Countries extends Model
 {
     protected $fillable = ['ISO', 'name'];
     protected $hidden = ['created_at', 'updated_at'];
-    public function getFirstSearch(string $search)
+    public static function getFirstSearch(string $search)
     {
-        return $this->where('name', 'LIKE', "%{$search}%")->get();
+        return self::where('name', 'LIKE', "%{$search}%")->get();
     }
 
     public function states()
