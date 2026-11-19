@@ -3,9 +3,12 @@
 namespace Tests\Feature;
 
 use Tests\TestCase;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class GeolocationApiTest extends TestCase
 {
+    use RefreshDatabase;
+    protected $seed = true;
     /**
      * Test GET /countries returns list of countries.
      */
