@@ -1,0 +1,91 @@
+name: Deploy Backend to Production
+
+on:
+  push:
+    branches: [ master, main ]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-backend-production
+  cancel-in-progress: false
+
+jobs:
+  test-and-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP 8.3
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, xml, ctype, iconv, intl, pdo_mysql, sqlite3, pdo_sqlite, bcmath, json, zip
+          coverage: none
+
+      - name: Install Composer Dependencies (Test)
+        run: composer install --no-progress --prefer-dist --optimize-autoloader
+
+      - name: Execute Tests
+        env:
+          APP_ENV: testing
+          APP_KEY: base64:eXvkBkSNSvfzIY1RMqiHCJhQLCz0ViDWvdndhDBRuJI=
+          JWT_SECRET: 3lu5OwtRSYZOZpvwLn8GtwEFJdbO1vlzjGliv8V0hRgL9vY8xmM7oV9BiLm0VHKz
+        run: php artisan test
+
+      - name: Prepare Deployment Package
+        run: |
+          mkdir -p ../build_temp
+          tar --exclude="./vendor" --exclude="./node_modules" --exclude="./.git" --exclude="./.github" --exclude="./tests" --exclude="./.phpunit.result.cache" --exclude="./bootstrap/cache/*.php" --exclude="./.env*" -czf ../build_temp/backend-deploy.tar.gz .
+          mv ../build_temp/backend-deploy.tar.gz ./backend-deploy.tar.gz
+          rm -rf ../build_temp
+
+      - name: Deploy to Hostinger Server via SCP
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          port: ${{ secrets.SSH_PORT != '' && secrets.SSH_PORT || 65002 }}
+          username: ${{ secrets.SSH_USER }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          key: ${{ secrets.SSH_KEY }}
+          source: "backend-deploy.tar.gz"
+          target: "/home/${{ secrets.SSH_USER }}/domains/superlistapp.com.ar/public_html/api"
+          overwrite: true
+
+      - name: Run Remote Setup & Optimizations
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          port: ${{ secrets.SSH_PORT != '' && secrets.SSH_PORT || 65002 }}
+          username: ${{ secrets.SSH_USER }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            cd /home/${{ secrets.SSH_USER }}/domains/superlistapp.com.ar/public_html/api
+            tar -xzf backend-deploy.tar.gz
+            rm -f backend-deploy.tar.gz
+            mkdir -p bootstrap/cache storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs storage/app/public
+            chmod -R 775 bootstrap/cache storage
+            rm -f bootstrap/cache/*.php
+
+            # Detectar binario PHP en Hostinger
+            if [ -x /opt/alt/php83/usr/bin/php ]; then
+              PHP_BIN="/opt/alt/php83/usr/bin/php"
+            elif [ -x /opt/alt/php82/usr/bin/php ]; then
+              PHP_BIN="/opt/alt/php82/usr/bin/php"
+            else
+              PHP_BIN="php"
+            fi
+
+            COMPOSER_BIN=$(which /usr/local/bin/composer 2>/dev/null || which composer 2>/dev/null || echo "composer")
+
+            $PHP_BIN $COMPOSER_BIN install --no-dev --optimize-autoloader --no-interaction
+            $PHP_BIN artisan migrate --force
+            $PHP_BIN artisan storage:link || true
+            $PHP_BIN artisan optimize:clear
+            $PHP_BIN artisan config:cache
+            $PHP_BIN artisan route:cache
+            $PHP_BIN artisan view:cache
+            chmod -R 775 storage bootstrap/cache
