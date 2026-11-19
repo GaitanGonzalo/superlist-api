@@ -18,10 +18,10 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Setup PHP 8.3
+      - name: Setup PHP 8.2
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.3'
+          php-version: '8.2'
           extensions: mbstring, xml, ctype, iconv, intl, pdo_mysql, sqlite3, pdo_sqlite, bcmath, json, zip
           coverage: none
 
@@ -71,10 +71,10 @@ jobs:
             rm -f bootstrap/cache/*.php
 
             # Detectar binario PHP en Hostinger
-            if [ -x /opt/alt/php83/usr/bin/php ]; then
-              PHP_BIN="/opt/alt/php83/usr/bin/php"
-            elif [ -x /opt/alt/php82/usr/bin/php ]; then
+            if [ -x /opt/alt/php82/usr/bin/php ]; then
               PHP_BIN="/opt/alt/php82/usr/bin/php"
+            elif [ -x /opt/alt/php83/usr/bin/php ]; then
+              PHP_BIN="/opt/alt/php83/usr/bin/php"
             else
               PHP_BIN="php"
             fi
